@@ -16,103 +16,30 @@ public class Game {
   private static final int COLUMNS = 11;
   private static final double BIAS = 1;
   Integer[][] table;
-  private int elements;
+  public int elements;
   int clothingToFocusOn = -1;
 
   public Game() {
-    /* table =
-      new Integer[][] {
-        { 1, 2, 2, 3, 2, 2, 2, 4, 4, 4, 3 },
-        { 1, 2, 1, 2, 1, 1, 1, 4, 4, 4, 3 },
-        { 1, 3, 1, 2, 4, 1, 4, 1, 2, 4, 3 },
-        { 4, 1, 4, 4, 1, 3, 4, 2, 2, 4, 3 },
-        { 1, 2, 2, 4, 2, 1, 3, 4, 2, 4, 3 },
-        { 1, 1, 2, 2, 1, 2, 1, 4, 4, 4, 3 },
-        { 1, 2, 3, 4, 2, 3, 2, 3, 2, 3, 3 },
-        { 1, 2, 1, 3, 1, 1, 4, 4, 2, 3, 3 },
-        { 4, 2, 1, 1, 2, 1, 4, 3, 4, 3, 3 },
-        { 3, 4, 2, 3, 2, 2, 1, 4, 4, 3, 3 },
-        { 1, 1, 3, 1, 1, 2, 3, 4, 2, 3, 3 },
-        { 1, 4, 2, 4, 3, 2, 1, 4, 3, 3, 3 },
-      }; */
-      /* table = new Integer[][] {
-        {1,1,2,3,4,4,2,4,3,1,4},
-        {2,3,4,1,1,4,2,3,1,3,4},
-        {4,1,3,3,3,1,4,2,1,3,4},
-        {2,1,1,4,2,1,2,3,2,2,3},
-        {3,4,2,3,1,4,4,4,1,2,3},
-        {1,2,3,1,1,3,2,4,1,3,4},
-        {1,1,3,3,1,3,1,2,2,3,4},
-        {2,4,3,4,4,2,1,1,2,3,4},
-        {1,3,4,1,4,4,1,4,2,2,3},
-        {2,1,2,2,2,4,2,2,4,3,4},
-        {3,3,4,3,2,1,2,3,4,2,4},
-        {1,1,1,4,2,1,3,2,2,3,3},
-      }; */
-      /* table = new Integer[][] {
-        {2,1,1,2,2,2,1,4,1,3,3},
-        {2,4,2,3,2,4,3,3,3,1,1},
-        {4,4,3,4,1,1,4,2,2,4,4},
-        {1,2,1,4,3,2,4,2,1,4,3},
-        {3,1,3,1,3,1,3,3,2,3,4},
-        {3,1,1,1,1,2,2,4,3,1,4},
-        {1,4,3,2,4,4,2,3,3,2,4},
-        {2,4,3,1,3,3,2,4,3,3,4},
-        {3,2,3,3,1,2,1,2,1,2,2},
-        {2,4,3,1,4,1,2,4,2,1,2},
-        {4,4,2,3,4,4,3,1,3,1,2},
-        {4,1,4,1,1,4,2,4,3,1,2}
-      }; */
-
-      table = new Integer[][]{
-        {3,4,3,2,2,4,3,3,3,4,1},
-        {1,1,3,2,1,3,4,1,4,1,1},
-        {4,3,3,3,3,3,3,3,1,2,2},
-        {2,1,3,3,1,4,3,4,1,1,2},
-        {2,4,3,4,2,4,3,2,1,1,2},
-        {4,1,3,4,4,2,3,2,2,1,2},
-        {1,4,4,1,1,3,3,4,3,1,2},
-        {3,2,4,2,4,3,3,4,1,1,2},
-        {1,3,1,4,4,4,3,2,2,4,2},
-        {4,2,3,4,3,4,3,1,1,1,2},
-        {4,3,2,1,3,4,3,1,1,4,2},
-        {4,2,1,3,4,4,2,1,2,1,2}
-      };
-
-      table = new Integer[][]{
-        {4,4,1,3,2,1,2,1,4,3,3},
-        {1,4,3,4,3,1,3,3,4,4,1},
-        {2,4,2,2,1,1,2,2,3,1,4},
-        {2,2,3,1,2,1,1,2,4,1,1},
-        {2,1,4,2,3,2,3,1,1,1,3},
-        {2,3,1,4,2,1,4,4,4,4,3},
-        {4,3,2,2,1,3,2,2,4,1,3},
-        {2,4,4,3,1,3,2,4,4,3,4},
-        {1,2,2,1,2,2,1,1,3,1,4},
-        {2,4,3,1,1,4,1,3,3,3,3},
-        {3,4,2,3,2,4,2,3,4,3,4},
-        {4,3,2,3,1,3,2,2,1,4,4}
-      };
       elements = ROWS*COLUMNS;
   }
 
-  public Integer[][] fillTable() {
-    Integer[][] table = new Integer[ROWS][COLUMNS];
-    Random rand = new Random();
-    rand.setSeed(System.currentTimeMillis());
-    int pairWithLastOne = 0;
-    for (int i = 0; i < ROWS; i++) {
-      for (int j = 0; j < COLUMNS; j++) {
-        int clothing = rand.nextInt(4) + 1;
-        if (10 > rand.nextInt(101) && pairWithLastOne != 0) {
-          table[i][j] = pairWithLastOne;
-        } else {
-          table[i][j] = clothing;
-        }
-        pairWithLastOne = clothing;
-      }
+  public Game(Integer[][] tab) {
+    this.table = tab;
+    elements = ROWS*COLUMNS;
+  }
+
+  public String getClothingNumber(int x, int y){
+    switch(table[y][x]){
+      case 1: return "Paita";
+      case 2: return "Kenkä";
+      case 3: return "Housut";
+      case 4: return "Laukku";
     }
-    return table;
+    return null;
+  }
+
+  public void newTable(Integer[][] tab) {
+    table = tab;
   }
 
   private void setFocus(Integer[][] table){
@@ -401,7 +328,7 @@ public class Game {
     double score3 = calculateScore3(table);
     double score4 = 1;
     if(digDeeper > 0){
-       score4 = seeTheFuture(table, digDeeper);
+       //score4 = seeTheFuture(table, digDeeper);
     }
     double overallScore = score1 * ((score2+score3)* (score4 > 0 ? score4 : (score1 >= 0 ? score4 : Math.abs(score4))));
     return overallScore;
