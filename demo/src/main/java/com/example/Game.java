@@ -14,7 +14,6 @@ public class Game {
 
   private static final int ROWS = 12;
   private static final int COLUMNS = 11;
-  private static final double BIAS = 1;
   Integer[][] table;
   public int elements;
   int clothingToFocusOn = -1;
@@ -29,6 +28,9 @@ public class Game {
   }
 
   public String getClothingNumber(int x, int y){
+    if(x < 0 || y < 0){
+      return null;
+    }
     switch(table[y][x]){
       case 1: return "Paita";
       case 2: return "Kenkä";
@@ -120,7 +122,6 @@ public class Game {
         }
       }
     }
-
     int minCount = Integer.MAX_VALUE;
     int number = 1;
     for (Map.Entry<Integer, Integer> entry : numbersFreq.entrySet()) {
@@ -133,6 +134,28 @@ public class Game {
     }
     this.clothingToFocusOn = number;
   }
+
+  public void setFocus2(){
+    double smallestDistance = Integer.MAX_VALUE;
+    int focus = 1;
+
+    for(int num = 1; num < 5; num++){
+      double totalDistance = 0;
+      for(int row = 0; row < ROWS; row++){
+        for(int col = 0; col < COLUMNS; col++){
+            if(table[row][col] != null && table[row][col] == num){
+              totalDistance += findNearestMate(col, row, table);
+            }
+        }
+      }
+      if(totalDistance < smallestDistance && totalDistance != 0){
+        smallestDistance = totalDistance;
+        focus = num;
+      }
+    }
+    clothingToFocusOn = focus;
+  }
+  
 
   public void updateTable() {
     // Handle drop.
@@ -229,9 +252,21 @@ public class Game {
     updateTable();
   }
 
+  private boolean needToUpdateFocus(){
+    int focusCounter = 0;
+    for(int i = 0; i<ROWS; i++){
+      for(int j = 0; j<COLUMNS; j++){
+        if(this.table[i][j] != null && this.table[i][j] == clothingToFocusOn){
+          focusCounter++;
+        }
+      }
+    }
+    return focusCounter == 0;
+  }
+
   public Point getBestMove() {
-    if (clothingToFocusOn == -1) {
-      setFocus();
+    if (clothingToFocusOn == -1 || needToUpdateFocus()) {
+      setFocus2();
     }
     ArrayList<Point> movesList = getMoves(table); //Minimum set of all the possible moves.
     double highestScore = Integer.MIN_VALUE;
@@ -252,18 +287,15 @@ public class Game {
       );
       addZeroesToRemovedPoints(virtualTable, toRemove);
       virtualTable = updateVirtualTable(virtualTable);
-      int digDeeper = 1;
+      int digDeeper = 2;
       if(elements <= ((double)(COLUMNS*ROWS)) / 1.5){
-        digDeeper = 5;
-      } else if(elements <= ((double)(COLUMNS*ROWS))/2){
-        if(elements <= ((double)(COLUMNS*ROWS)) / 4){
-          digDeeper = 10;
-        } else {
-          digDeeper = 8;
-        }
+        digDeeper = 3;
+      }
+      if(elements <= ((double)(COLUMNS*ROWS))/2.2){
+        digDeeper = 10;
       }
       double temp = score(virtualTable, digDeeper);
-      // from left to right
+      // from left to right and down to up.
       if (temp >= highestScore) {
         if(temp == highestScore){
           if(p.x < bestMove.x){
@@ -323,34 +355,40 @@ public class Game {
   }
 
   private double score(Integer[][] table, int digDeeper){
-    double score1 = calculateScore(table);
+    
+    /* double score1 = calculateScore(table);
     double score2 = calculateScore2(table);
     double score3 = calculateScore3(table);
     double score4 = 1;
     if(digDeeper > 0){
-       //score4 = seeTheFuture(table, digDeeper);
+       score4 = seeTheFuture(table, digDeeper);
     }
-    double overallScore = score1 * ((score2+score3)* (score4 > 0 ? score4 : (score1 >= 0 ? score4 : Math.abs(score4))));
-    return overallScore;
+    double overallScore = score1 * ((score2+score3) * (score4 > 0 ? score4 : (score1 >= 0 ? score4 : Math.abs(score4))));
+    return overallScore; */
+    double score1 = calculateScore(table); // either 1 or -1
+    double score2 = calculateScore2(table); // how many item to focus on singles
+    double score3 = calculateScore3(table);
+    score2 = 0;
+    double score5 = calculateScore5(table); // total amount of single pairs.
+    double score4 = 1;
+    if(digDeeper > 0){
+      score4 = seeTheFuture(table, digDeeper);
+    }
+    double BIAS = 200;
+    if(getElements(table) <= (double)ROWS * (double)COLUMNS / 2){
+      BIAS = 0;
+    }
+    score2 += (score2/100*BIAS);
+    double score = (score2 + score5) * score4;
+    return score <= 0 ? (score*Math.abs(score1)) : (score * score1);
   }
-
-  // Score is calculated by the amount of non-single items in the table
-  // focusing on the clothingToFocusOn
-  private double calculateScore(Integer[][] table) {
+  private double calculateScore5(Integer[][] table){
     double counter = 0;
     double pairsFound = 0;
-    HashMap<Integer, Integer> numbersFreq = new HashMap<>(4);
     for (int row = 0; row < ROWS; row++) {
       for (int col = 0; col < COLUMNS; col++) {
         if (table[row][col] != null && table[row][col] != 0) {
-
           int num = table[row][col];
-          if (numbersFreq.containsKey((Integer) num)) {
-            int count = numbersFreq.get((Integer) num);
-            numbersFreq.put((Integer) num, count + 1);
-          } else {
-            numbersFreq.put((Integer) num, 1);
-          }
           counter++;
           int up = row > 0 && table[row - 1][col] != null
                 ? table[row - 1][col] : -1;
@@ -367,13 +405,33 @@ public class Game {
         }
       }
     }
+    if(counter == 0 || counter == pairsFound){
+      return 2;
+    }
+    return(pairsFound/counter);
+  }
 
-    double score1 = pairsFound/(counter != 0 ? counter : 1);
+  // Check that no 1 single value gets left
+  private double calculateScore(Integer[][] table) {
+    HashMap<Integer, Integer> numbersFreq = new HashMap<>(4);
+    for (int row = 0; row < ROWS; row++) {
+      for (int col = 0; col < COLUMNS; col++) {
+        if (table[row][col] != null && table[row][col] != 0) {
+          int num = table[row][col];
+          if (numbersFreq.containsKey((Integer) num)) {
+            int count = numbersFreq.get((Integer) num);
+            numbersFreq.put((Integer) num, count + 1);
+          } else {
+            numbersFreq.put((Integer) num, 1);
+          }
+        }
+      }
+    }
     //Check that there are no single values
     for (Map.Entry<Integer, Integer> entry : numbersFreq.entrySet()) {
-      if (entry.getValue() == 1) score1 = -1;
+      if (entry.getValue() == 1) return -1;
     } 
-    return score1;
+    return 1;
   }
 
   private double seeTheFuture(Integer[][] table, int digDeeper){
@@ -402,10 +460,16 @@ public class Game {
       addZeroesToRemovedPoints(table, toRemove);
       updateVirtualTable(table);
       double tempScore = score(table, --digDeeper);
-      if (tempScore > highest){
-        highest = tempScore;
-        bestMove = p;
-        bestMove.score = tempScore;
+      if (tempScore >= highest){
+        if(tempScore == highest && p.x < bestMove.x){
+          highest = tempScore;
+          bestMove = p;
+          bestMove.score = tempScore;
+        } else {
+          highest = tempScore;
+          bestMove = p;
+          bestMove.score = tempScore;
+        }
       }
       digDeeper = digTemp;
     }
@@ -453,39 +517,43 @@ public class Game {
         }
       }
     }
+
+    if(focusCounter == 1){
+      return -1;
+    }
     if(focusCounter == 0){
-        setFocus(table);
         return 2;
     }
-
     if(focusCounter == pairsFound){
       return 2;
     }
-    return (pairsFound / focusCounter) + BIAS;
+    return (pairsFound / focusCounter);
   }
 
-  // Calculates how far away the nodes are from another node
+  // Calculates how far away the focus nodes are from another focus node
   private double calculateScore3(Integer[][] table){
     //Lower is better;
     double totalDistance = 0;
     double counter = 0;
     for(int row = 0; row < ROWS; row++){
         for(int col = 0; col < COLUMNS; col++){
-            if(table[row][col] != null && table[row][col] != 0){
-              totalDistance += findNearestMate(row, col, table);
+            if(table[row][col] != null && table[row][col] != clothingToFocusOn){
+              totalDistance += findNearestMate(col, row, table);
               counter++;
             }
         }
     }
-    double bias = 0;
-    if(elements >= ((double)(ROWS*COLUMNS))/2){
-      bias = 50;
+    if(counter == 0){
+      return 2;
     }
     double score = counter/totalDistance;
-    return (score + (score/100*bias));
+    return (score);
   }
   private double findNearestMate(int x, int y, Integer[][] table){
-    Point nearest = bfs(table, new Point(x, y), table[x][y]);
+    Point nearest = bfs(table, new Point(y, x), table[y][x]);
+    if(nearest == null){
+      return -1;
+    }
     return distance(x, y, nearest.x, nearest.y);
   }
 
@@ -501,14 +569,18 @@ public class Game {
         for (int i = 0; i < size; i++) {
             Point curr = queue.poll();
             if (table[curr.y][curr.x] != null && table[curr.y][curr.x] == target) {
-                return curr;
+                if(curr.y != start.y && curr.x != start.x){
+                  return curr;
+                }
             }
             for (int[] dir : dirs) {
                 int x = curr.x + dir[0];
                 int y = curr.y + dir[1];
                 if (isValid(x, y, ROWS, COLUMNS) && !visited[y][x]) {
-                    queue.offer(new Point(x, y));
+                  if(Math.abs(start.x - x) <= 1){
+                    queue.offer(new Point(y, x));
                     visited[y][x] = true;
+                  }
                 }
             }
         }

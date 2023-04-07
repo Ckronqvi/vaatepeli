@@ -17,8 +17,6 @@ import org.opencv.objdetect.Objdetect;
 
 public class ComputerVision {
   static {
-    String classPath = "C:\\Users\\nooa\\Downloads\\opencv\\build\\java\\x64";
-    System.setProperty("java.library.path", classPath);
     System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
   }
 
@@ -198,7 +196,7 @@ public class ComputerVision {
         }
       }
     );
-    System.out.println("SIZE: " + groupedRectangles.size());
+    System.out.println("SIZE (MUST BE 132): " + groupedRectangles.size());
     Integer[][] grid = new Integer[12][11];
     int row = 0;
     int col = 0;
@@ -230,8 +228,6 @@ public class ComputerVision {
         row++;
       }
     }
-    HighGui.imshow("Original Image", table);
-    HighGui.waitKey();
     return grid;
   }
 }
