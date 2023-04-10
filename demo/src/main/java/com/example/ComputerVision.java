@@ -196,7 +196,10 @@ public class ComputerVision {
         }
       }
     );
-    System.out.println("SIZE (MUST BE 132): " + groupedRectangles.size());
+    if(groupedRectangles.size() != 132){
+      System.out.println("SIZE (MUST BE 132): " + groupedRectangles.size());
+      return null;
+    }
     Integer[][] grid = new Integer[12][11];
     int row = 0;
     int col = 0;
