@@ -1,2 +1,2 @@
 # vaatepeli
-bot for the wardrobe challenge
+GoSupermodel-peliin tehty botti. Harjoittelin Computer Visionin käyttämistä Javalla. 
